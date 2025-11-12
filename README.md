@@ -1,4 +1,4 @@
-<img width="512" height="512" alt="Logo do Jogo SharkLog" src="https://github.com/user-attachments/assets/5380b90a-8ce2-4d41-9ce4-596b7fe2c4fd" />
+![sharklog_banner](https://github.com/user-attachments/assets/52e1d32d-f748-4dd4-9bc6-aaa2b157c870)
 
 # 🦈 SharkLog — Campo Minado de Boa Viagem
 
