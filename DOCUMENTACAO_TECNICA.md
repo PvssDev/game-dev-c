@@ -228,13 +228,3 @@ O projeto **SharkLog** cumpre os requisitos de **PIF** e **Lógica Computacional
 - interface interativa via terminal.
 
 O jogo promove o raciocínio lógico do jogador, estimulando dedução e estratégia enquanto explora as águas (perigosas) de Boa Viagem. 🦈🌊
-
----
-
-## 👨‍🏫 12. Referências
-
-- CLI-lib — Terminal User Interface Library for C: https://github.com/tgfb/cli-lib
-
-- CESAR School — Diretrizes das disciplinas PIF e Lógica Computacional.
-
-- Kernighan, B. & Ritchie, D. — The C Programming Language.
