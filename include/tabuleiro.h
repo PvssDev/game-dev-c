@@ -4,18 +4,16 @@
 typedef struct {
     int linhas;
     int colunas;
-    char **matriz; // matriz de caracteres para representar o mapa
+    char **matriz;
 } Tabuleiro;
 
-// Cria o tabuleiro dinamicamente
-Tabuleiro* criar_tabuleiro(int linhas, int colunas);
+// Cria o tabuleiro gigante 80x30
+Tabuleiro* criar_tabuleiro_gigante();
 
 // Destrói o tabuleiro
 void destruir_tabuleiro(Tabuleiro *tab);
 
-// Desenha o tabuleiro na tela (inclui bordas e jogador)
+// Desenha o tabuleiro gigante
 void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY);
 
-#endif /* __TABULEIRO_H__ */
-
-// por enquanto está só a estrutura do tabuleiro, sem tubarões
+#endif
