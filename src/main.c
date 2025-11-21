@@ -1,10 +1,11 @@
 /**
   * Created on Aug, 23th 2023
- * Author: Tiago Barros
- * Based on "From C to C++ course - 2002"
- *
- * Observação: mantive todas as funções originais e apenas integrei o tabuleiro.
- */
+  * Author: Tiago Barros
+  * Based on "From C to C++ course - 2002"
+  *
+  * Observação: mantive todas as funções originais e apenas integrei
+  * o tabuleiro com tubarões móveis e jogador emoji.
+  */
 
 #include <string.h>
 #include <stdlib.h>
@@ -16,8 +17,43 @@
 
 #include "tabuleiro.h" // ADICIONADO: integração com o tabuleiro
 
+// Emoji do jogador
+#define EMOJI_JOGADOR "🏄"
+
 int x = 34, y = 12;
 int incX = 1, incY = 1;
+
+// Função para mover tubarões aleatoriamente
+void mover_tubaroes(Tabuleiro *tab) {
+    if (!tab) return;
+
+    for (int i = 0; i < tab->linhas; i++) {
+        for (int j = 0; j < tab->colunas; j++) {
+            if (tab->matriz[i][j] == 'S') {
+                // escolhe direção aleatória: 0=esq,1=dir,2=cima,3=baixo
+                int dir = rand() % 4;
+                int ni = i, nj = j;
+
+                switch(dir) {
+                    case 0: nj--; break;
+                    case 1: nj++; break;
+                    case 2: ni--; break;
+                    case 3: ni++; break;
+                }
+
+                // verifica limites e se não sobrescreve o jogador
+                if (ni > 1 && ni < tab->linhas-1 &&
+                    nj > 1 && nj < tab->colunas-1 &&
+                    !(ni == y && nj == x) &&
+                    tab->matriz[ni][nj] != 'S') {
+
+                    tab->matriz[ni][nj] = 'S';
+                    tab->matriz[i][j] = '.';
+                }
+            }
+        }
+    }
+}
 
 void printHello(int nextX, int nextY)
 {
@@ -27,7 +63,7 @@ void printHello(int nextX, int nextY)
     x = nextX;
     y = nextY;
     screenGotoxy(x, y);
-    printf("Hello World");
+    printf(EMOJI_JOGADOR);  // trocado para emoji surfista
 }
 
 void printKey(int ch)
@@ -64,26 +100,21 @@ int main()
     // -----------------------------
     srand((unsigned) time(NULL));
 
-    // cria tabuleiro usando as constantes de screen.h (MAXY = linhas, MAXX = colunas)
     Tabuleiro *tab = criar_tabuleiro(MAXY, MAXX);
     if (tab == NULL) {
-        // se falhar, continua sem tabuleiro (comportamento antigo)
         screenSetColor(RED, BLACK);
         screenGotoxy(1, MAXY + 2);
         printf("Erro: falha ao criar tabuleiro. Continuando sem tabuleiro...");
         screenSetColor(WHITE, BLACK);
     } else {
-        // popula com alguns tubarões aleatórios (caractere 'S')
-        int qtd = 12; // número de tubarões inicial (ajustável)
+        int qtd = 12;
         for (int k = 0; k < qtd; k++) {
-            int rx = rand() % (tab->colunas - 4) + 2; // evita bordas
+            int rx = rand() % (tab->colunas - 4) + 2;
             int ry = rand() % (tab->linhas - 4) + 2;
-            // evita sobrescrever a posição inicial do Hello (x,y)
             if (rx == x && ry == y) { k--; continue; }
             tab->matriz[ry][rx] = 'S';
         }
 
-        // desenha o tabuleiro pela primeira vez (antes do Hello)
         desenhar_tabuleiro(tab, x, y);
     }
     // -----------------------------
@@ -93,9 +124,8 @@ int main()
     printHello(x, y);
     screenUpdate();
 
-    while (ch != 10 && timer <= 100) //enter or 5s
+    while (ch != 10 && timer <= 100)
     {
-        // Handle user input
         if (keyhit()) 
         {
             ch = readch();
@@ -103,20 +133,18 @@ int main()
             screenUpdate();
         }
 
-        // Update game state (move elements, verify collision, etc)
         if (timerTimeOver() == 1)
         {
             int newX = x + incX;
-            if (newX >= (MAXX -strlen("Hello World") -1) || newX <= MINX+1) incX = -incX;
+            if (newX >= (MAXX -strlen(EMOJI_JOGADOR) -1) || newX <= MINX+1) incX = -incX;
             int newY = y + incY;
             if (newY >= MAXY-1 || newY <= MINY+1) incY = -incY;
 
             // -----------------------------
-            // ADICIONADO: redesenha o tabuleiro (com tubarões) a cada frame
-            // mantendo o comportamento original do Hello World.
-            // desenhar_tabuleiro já posiciona o jogador internamente ao receber x,y.
+            // ADICIONADO: move tubarões a cada rodada
             // -----------------------------
             if (tab != NULL) {
+                mover_tubaroes(tab);
                 desenhar_tabuleiro(tab, newX, newY);
             }
 
@@ -127,14 +155,10 @@ int main()
         }
     }
 
-    // -----------------------------
-    // ADICIONADO: libera tabuleiro
-    // -----------------------------
     if (tab != NULL) {
         destruir_tabuleiro(tab);
         tab = NULL;
     }
-    // -----------------------------
 
     keyboardDestroy();
     screenDestroy();

@@ -4,6 +4,9 @@
 // Emoji do tubarão (UTF-8)
 #define EMOJI_TUBARAO "🦈"
 
+// Emoji do jogador surfista (UTF-8)
+#define EMOJI_JOGADOR "🏄"
+
 // Borda ASCII
 #define BORDA_CANTOS       "+"
 #define BORDA_HORIZONTAL   "-"

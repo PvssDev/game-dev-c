@@ -1,5 +1,5 @@
 /**
- * src/tabuleiro.c – versão com TUBARÃO EM EMOJI (🦈)
+ * src/tabuleiro.c – versão com TUBARÃO EM EMOJI (🦈) e JOGADOR SURFISTA (🏄)
  */
 
 #include <stdio.h>
@@ -14,7 +14,10 @@
 #define BORDA_VERTICAL     "|"
 
 // Emoji do tubarão (3 bytes UTF-8)
-#define EMOJI_TUBARAO   "🦈"
+// OBS: EMOJI_TUBARAO já definido no tabuleiro.h
+
+// Emoji do jogador (surfista) definido no tabuleiro.h
+// #define EMOJI_JOGADOR "🏄" // não precisa redefinir, já vem do .h
 
 Tabuleiro* criar_tabuleiro(int linhas, int colunas) {
     Tabuleiro *tab = (Tabuleiro*)malloc(sizeof(Tabuleiro));
@@ -72,10 +75,10 @@ void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY) {
 
         for (int x = 0; x < C; x++) {
 
-            // JOGADOR
+            // JOGADOR SURFISTA
             if (x == jogadorX && y == jogadorY) {
                 screenSetColor(RED, BLACK);
-                printf("P");
+                printf(EMOJI_JOGADOR);
                 continue;
             }
 
