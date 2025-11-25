@@ -52,29 +52,35 @@ int fazer_pergunta_gui(const char* p, const char* r1, const char* r2, int indice
         screenGotoxy(MINX, START_Y + i);
         printf("                                                                     "); 
     }
+    screenUpdate(); // Garante que limpou
 
-    // 2. Desenha o texto
+    // 2. Desenha o texto linha a linha e força atualização
     screenSetColor(YELLOW, BLACK);
     screenGotoxy(MINX, START_Y);     printf("=== PERGUNTA DE LOGICA ===");
-    
+    screenUpdate();
+
     screenSetColor(WHITE, BLACK);
-    screenGotoxy(MINX, START_Y + 2); printf("PERGUNTA: %s", p);
-    
-    screenGotoxy(MINX, START_Y + 4); printf("1) %s", r1);
-    screenGotoxy(MINX, START_Y + 5); printf("2) %s", r2);
+    screenGotoxy(MINX, START_Y + 1); printf("PERGUNTA: %s", p);
+    screenUpdate();
+
+    screenGotoxy(MINX, START_Y + 3); printf("1) %s", r1);
+    screenUpdate();
+
+    screenGotoxy(MINX, START_Y + 4); printf("2) %s", r2);
+    screenUpdate();
     
     screenSetColor(CYAN, BLACK);
-    screenGotoxy(MINX, START_Y + 7); printf("Digite [1] ou [2] (Q sair): ");
-    
-    // --- O PULO DO GATO ---
-    // Força o terminal a desenhar o texto AGORA, antes de travar esperando o input
-    screenUpdate(); 
-    // ---------------------
+    screenGotoxy(MINX, START_Y + 6); printf("Digite [1] ou [2] (Q sair): ");
+    screenUpdate(); // O texto TEM que aparecer agora
 
     char ch = ' ';
-    // Loop bloqueante esperando resposta
+    // Loop de espera com respiro para o processador
     while(ch != '1' && ch != '2' && ch != 'q' && ch != 'Q') {
-        if(keyhit()) ch = readch();
+        if(keyhit()) {
+            ch = readch();
+        } else {
+            usleep(10000); // Espera 10ms (evita travar CPU em 100%)
+        }
     }
     
     if (ch == 'q' || ch == 'Q') return -1;
@@ -108,7 +114,6 @@ int jogo_fase_perguntas(Jogador *j) {
         int idx = rand() % qtd_perguntas;
         int correta = atoi(PERGUNTAS_NORMAIS[idx][3]);
 
-        // Chama a GUI (que agora tem screenUpdate)
         int res = fazer_pergunta_gui(
             PERGUNTAS_NORMAIS[idx][0], 
             PERGUNTAS_NORMAIS[idx][1], 
@@ -117,27 +122,31 @@ int jogo_fase_perguntas(Jogador *j) {
         );
         
         int START_Y = MINY + ALTURA_JOGO + 4;
-        screenGotoxy(MINX, START_Y + 7); 
-        printf("                                    "); 
-        screenGotoxy(MINX, START_Y + 7);
+        screenGotoxy(MINX, START_Y + 6); 
+        printf("                                            "); // Limpa input
+        screenGotoxy(MINX, START_Y + 6);
 
         if (res == -1) return 0; 
 
         if (res == 1) {
             j->pontuacao += PONTOS_NORMAL;
             screenSetColor(GREEN, BLACK);
-            printf("ACERTOU! +%d pts. (Enter...)", PONTOS_NORMAL);
+            printf("ACERTOU! +%d pts.", PONTOS_NORMAL);
         } else {
             screenSetColor(RED, BLACK);
-            printf("ERROU! (Enter...)");
+            printf("ERROU!");
         }
         
-        // Força atualização para mostrar "ACERTOU/ERROU"
-        screenUpdate(); 
+        screenGotoxy(MINX, START_Y + 7);
+        printf("(Pressione qualquer tecla...)");
+        screenUpdate();
 
-        while(!keyhit()); // Espera o Enter
-        readch();
-        while(keyhit()) readch();   
+        // Loop de espera melhorado para não travar
+        while(keyhit()) readch(); // Limpa buffer antes
+        while(!keyhit()) {
+            usleep(10000); 
+        }
+        readch(); // Lê a tecla
     }
     
     // Limpeza final da área
@@ -147,7 +156,7 @@ int jogo_fase_perguntas(Jogador *j) {
         screenGotoxy(MINX, START_Y + i);
         printf("                                                                     ");
     }
-    screenUpdate(); // Garante que limpou
+    screenUpdate();
     return 1;
 }
 
@@ -164,20 +173,27 @@ int jogo_pergunta_tubarao(Jogador *j) {
     );
 
     int START_Y = MINY + ALTURA_JOGO + 4;
-    screenGotoxy(MINX, START_Y + 7);
+    screenGotoxy(MINX, START_Y + 6);
+    printf("                                            ");
+    screenGotoxy(MINX, START_Y + 6);
 
     if (res == 1) {
         j->pontuacao += PONTOS_DIFICIL;
         screenSetColor(GREEN, BLACK);
-        printf("ESCAPOU! +%d pts. (Enter...)", PONTOS_DIFICIL);
+        printf("ESCAPOU! +%d pts.", PONTOS_DIFICIL);
+        return 1;
     } else {
         j->vidas--;
         screenSetColor(RED, BLACK);
-        printf("ERROU! -1 VIDA. (Enter...)");
+        printf("ERROU! -1 VIDA.");
+        return 0;
     }
+    screenUpdate();
     
-    screenUpdate(); // Mostra o resultado
-    return (res == 1);
+    // Espera tecla
+    while(keyhit()) readch();
+    while(!keyhit()) usleep(10000);
+    readch();
 }
 
 void jogo_mover_tubaroes(Tabuleiro *tab, Jogador *j) {
@@ -221,5 +237,5 @@ void desenhar_HUD(Jogador *j) {
     screenGotoxy(MINX, Y_HUD);
     printf(" 🏄 PONTOS: %d  |  VIDAS: %d  |  [WASD] Mover | [Q] Sair ", j->pontuacao, j->vidas);
     printf("               ");
-    screenUpdate(); // Garante que o HUD apareça
+    screenUpdate(); 
 }
