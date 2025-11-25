@@ -17,7 +17,11 @@ static char *read_file(const char *path) {
     return buf;
 }
 
-// Funções auxiliares de parsing JSON
+// Funções auxiliares de parsing JSON, marcadas unused
+static char* find_between(char *src, const char *start, const char *end) __attribute__((unused));
+static void trim_quotes(char *s) __attribute__((unused));
+static int parse_array_strings(char *src, char dest[][MAX_TEXTO], int maxdest) __attribute__((unused));
+
 static char* find_between(char *src, const char *start, const char *end) {
     char *a = strstr(src, start);
     if (!a) return NULL;
@@ -56,7 +60,7 @@ int carregar_perguntas(const char *path, BancoPerguntas *b) {
     b->qtd_rodada=b->qtd_tubarao=0;
 
     // implementação simples: procura "perguntas_rodada" e "perguntas_tubarao"
-    // ... (mesma lógica que você enviou) ...
+    // ... sua lógica de parsing aqui ...
 
     free(file);
     return 1;
