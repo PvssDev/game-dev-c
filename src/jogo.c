@@ -43,16 +43,17 @@ static const char* PERGUNTAS_DIFICEIS[][4] = {
 
 // --- INTERFACE DE PERGUNTA (GUI) ---
 int fazer_pergunta_gui(const char* p, const char* r1, const char* r2, int indice_correta) {
-    // Define a posição Y para desenhar LOGO ABAIXO da borda inferior
+    // Posição Y calculada (Logo abaixo do HUD)
     int START_Y = MINY + ALTURA_JOGO + 4; 
 
-    // Limpa APENAS a área das perguntas (Sem apagar o tabuleiro)
+    // 1. Limpa área das perguntas
     screenSetColor(WHITE, BLACK);
     for(int i=0; i<8; i++) {
         screenGotoxy(MINX, START_Y + i);
         printf("                                                                     "); 
     }
 
+    // 2. Desenha o texto
     screenSetColor(YELLOW, BLACK);
     screenGotoxy(MINX, START_Y);     printf("=== PERGUNTA DE LOGICA ===");
     
@@ -65,7 +66,13 @@ int fazer_pergunta_gui(const char* p, const char* r1, const char* r2, int indice
     screenSetColor(CYAN, BLACK);
     screenGotoxy(MINX, START_Y + 7); printf("Digite [1] ou [2] (Q sair): ");
     
+    // --- O PULO DO GATO ---
+    // Força o terminal a desenhar o texto AGORA, antes de travar esperando o input
+    screenUpdate(); 
+    // ---------------------
+
     char ch = ' ';
+    // Loop bloqueante esperando resposta
     while(ch != '1' && ch != '2' && ch != 'q' && ch != 'Q') {
         if(keyhit()) ch = readch();
     }
@@ -78,7 +85,6 @@ int fazer_pergunta_gui(const char* p, const char* r1, const char* r2, int indice
 
 // --- LÓGICA DO JOGO ---
 
-// Movi essa função para cima para evitar o erro de Implicit Declaration
 void jogo_resetar_tubaroes(Tabuleiro *tab) {
     for(int i=0; i<tab->linhas; i++)
         for(int j=0; j<tab->colunas; j++)
@@ -87,7 +93,6 @@ void jogo_resetar_tubaroes(Tabuleiro *tab) {
     for(int k=0; k<6; k++) {
         int rL = rand() % (tab->linhas - 2) + 1;
         int rC = rand() % (tab->colunas - 2) + 1;
-        // Evita spawns muito próximos da borda logo no início
         if (rL > 3 || rC > 3) tab->matriz[rL][rC] = 'S';
     }
 }
@@ -103,6 +108,7 @@ int jogo_fase_perguntas(Jogador *j) {
         int idx = rand() % qtd_perguntas;
         int correta = atoi(PERGUNTAS_NORMAIS[idx][3]);
 
+        // Chama a GUI (que agora tem screenUpdate)
         int res = fazer_pergunta_gui(
             PERGUNTAS_NORMAIS[idx][0], 
             PERGUNTAS_NORMAIS[idx][1], 
@@ -112,7 +118,7 @@ int jogo_fase_perguntas(Jogador *j) {
         
         int START_Y = MINY + ALTURA_JOGO + 4;
         screenGotoxy(MINX, START_Y + 7); 
-        printf("                                    "); // Limpa o input anterior
+        printf("                                    "); 
         screenGotoxy(MINX, START_Y + 7);
 
         if (res == -1) return 0; 
@@ -126,18 +132,22 @@ int jogo_fase_perguntas(Jogador *j) {
             printf("ERROU! (Enter...)");
         }
         
-        // Corrigido para resolver o warning do while sem chaves
-        while(!keyhit()) {} 
+        // Força atualização para mostrar "ACERTOU/ERROU"
+        screenUpdate(); 
+
+        while(!keyhit()); // Espera o Enter
         readch();
-        while(keyhit()) readch(); 
+        while(keyhit()) readch();   
     }
     
-    // Limpeza final da área de perguntas
+    // Limpeza final da área
     int START_Y = MINY + ALTURA_JOGO + 4;
+    screenSetColor(WHITE, BLACK);
     for(int i=0; i<8; i++) {
         screenGotoxy(MINX, START_Y + i);
         printf("                                                                     ");
     }
+    screenUpdate(); // Garante que limpou
     return 1;
 }
 
@@ -160,13 +170,14 @@ int jogo_pergunta_tubarao(Jogador *j) {
         j->pontuacao += PONTOS_DIFICIL;
         screenSetColor(GREEN, BLACK);
         printf("ESCAPOU! +%d pts. (Enter...)", PONTOS_DIFICIL);
-        return 1;
     } else {
         j->vidas--;
         screenSetColor(RED, BLACK);
         printf("ERROU! -1 VIDA. (Enter...)");
-        return 0;
     }
+    
+    screenUpdate(); // Mostra o resultado
+    return (res == 1);
 }
 
 void jogo_mover_tubaroes(Tabuleiro *tab, Jogador *j) {
@@ -182,18 +193,15 @@ void jogo_mover_tubaroes(Tabuleiro *tab, Jogador *j) {
                 novaMatriz[y][x] = '.'; 
                 int novoY = y, novoX = x;
                 
-                // Lógica de perseguição (movimento na direção do jogador)
                 if (abs(x - j->x) > abs(y - j->y)) {
                     if (x < j->x) novoX++; else if (x > j->x) novoX--;
                 } else {
                     if (y < j->y) novoY++; else if (y > j->y) novoY--;
                 }
                 
-                // Move se for válido e o destino estiver vazio
                 if (posicao_valida(novoX, novoY, tab->linhas, tab->colunas) && novaMatriz[novoY][novoX] == '.') {
                     novaMatriz[novoY][novoX] = 'S';
                 } else {
-                    // Se não puder mover, mantém na posição original
                     novaMatriz[y][x] = 'S'; 
                 }
             }
@@ -209,10 +217,9 @@ void jogo_mover_tubaroes(Tabuleiro *tab, Jogador *j) {
 
 void desenhar_HUD(Jogador *j) {
     int Y_HUD = MINY + ALTURA_JOGO + 2; 
-    
     screenSetColor(WHITE, BLACK);
     screenGotoxy(MINX, Y_HUD);
-    
     printf(" 🏄 PONTOS: %d  |  VIDAS: %d  |  [WASD] Mover | [Q] Sair ", j->pontuacao, j->vidas);
     printf("               ");
+    screenUpdate(); // Garante que o HUD apareça
 }
