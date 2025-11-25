@@ -1,8 +1,3 @@
-/**
- * src/tabuleiro.c – versão com TUBARÃO EM EMOJI (🦈) e JOGADOR SURFISTA (🏄)
- * Agora com funções de movimento de jogador, colisão e tubarões integradas
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,17 +89,24 @@ void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY) {
     screenUpdate();
 }
 
+// =====================
+// Funções de movimento globais
+// =====================
+extern int jogadorX, jogadorY;
+extern int next_moveX, next_moveY;
+
 // Aplica movimento do jogador dentro das bordas
-void aplicar_movimento(Tabuleiro *tab, int *jogadorX, int *jogadorY, int moveX, int moveY) {
+void aplicar_movimento(Tabuleiro *tab) {
     if (!tab) return;
-    int nx = *jogadorX + moveX;
-    int ny = *jogadorY + moveY;
-    if (nx > 0 && nx < tab->colunas-1) *jogadorX = nx;
-    if (ny > 0 && ny < tab->linhas-1) *jogadorY = ny;
+    int nx = jogadorX + next_moveX;
+    int ny = jogadorY + next_moveY;
+    if (nx > 0 && nx < tab->colunas-1) jogadorX = nx;
+    if (ny > 0 && ny < tab->linhas-1) jogadorY = ny;
+    next_moveX = next_moveY = 0;
 }
 
 // Move tubarões em direção ao jogador
-void mover_tubaroes_perseguicao(Tabuleiro *tab, int jogadorX, int jogadorY) {
+void mover_tubaroes_perseguicao(Tabuleiro *tab) {
     if (!tab) return;
 
     char **novo = malloc(tab->linhas * sizeof(char*));
@@ -147,7 +149,7 @@ void mover_tubaroes_perseguicao(Tabuleiro *tab, int jogadorX, int jogadorY) {
 }
 
 // Checa colisão do jogador com tubarão
-int checar_colisao(Tabuleiro *tab, int jogadorX, int jogadorY) {
+int checar_colisao(Tabuleiro *tab) {
     if (!tab) return 0;
     return tab->matriz[jogadorY][jogadorX] == 'S';
 }
