@@ -1,6 +1,5 @@
 /**
- * src/tabuleiro.c
- * CORRIGIDO: Alinhamento visual para evitar que emojis "empurrem" o cenário.
+ * src/tabuleiro.c – versão com TUBARÃO EM EMOJI (🦈) e JOGADOR SURFISTA (🏄)
  */
 
 #include <stdio.h>
@@ -13,6 +12,12 @@
 #define BORDA_CANTOS       "+"
 #define BORDA_HORIZONTAL   "-"
 #define BORDA_VERTICAL     "|"
+
+// Emoji do tubarão (3 bytes UTF-8)
+// OBS: EMOJI_TUBARAO já definido no tabuleiro.h
+
+// Emoji do jogador (surfista) definido no tabuleiro.h
+// #define EMOJI_JOGADOR "🏄" // não precisa redefinir, já vem do .h
 
 Tabuleiro* criar_tabuleiro(int linhas, int colunas) {
     Tabuleiro *tab = (Tabuleiro*)malloc(sizeof(Tabuleiro));
@@ -54,14 +59,13 @@ void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY) {
 
     screenSetColor(WHITE, BLACK);
 
-    // --- Borda superior ---
+    // Borda superior
     screenGotoxy(MINX, MINY);
     printf("%s", BORDA_CANTOS);
-    // Como o conteúdo agora é duplo (. + espaço), a borda precisa ser dupla também
-    for (int i = 0; i < C; i++) printf("%s%s", BORDA_HORIZONTAL, BORDA_HORIZONTAL); 
+    for (int i = 0; i < C; i++) printf("%s", BORDA_HORIZONTAL);
     printf("%s", BORDA_CANTOS);
 
-    // --- Corpo do Tabuleiro ---
+    // Corpo
     for (int y = 0; y < L; y++) {
         int screenY = MINY + 1 + y;
 
@@ -71,35 +75,33 @@ void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY) {
 
         for (int x = 0; x < C; x++) {
 
-            // CASO 1: JOGADOR SURFISTA
+            // JOGADOR SURFISTA
             if (x == jogadorX && y == jogadorY) {
-                screenSetColor(WHITE, BLUE); // Fundo azul para destacar na água
-                printf("%s", EMOJI_JOGADOR); // O Emoji já ocupa 2 espaços visuais
-                screenSetColor(WHITE, BLACK); // Reseta cor
+                screenSetColor(RED, BLACK);
+                printf(EMOJI_JOGADOR);
                 continue;
             }
 
-            // CASO 2: TUBARÃO
+            // TUBARÃO
             if (tab->matriz[y][x] == 'S') {
                 screenSetColor(WHITE, BLACK);
-                printf("%s", EMOJI_TUBARAO); // O Emoji já ocupa 2 espaços visuais
+                printf(EMOJI_TUBARAO);
                 continue;
             }
 
-            // CASO 3: ÁGUA
-            // AQUI ESTÁ A CORREÇÃO: Adicionamos um espaço após o ponto
-            screenSetColor(CYAN, BLACK); 
-            printf(". "); // Agora a água ocupa 2 espaços, igual aos emojis!
+            // água normal
+            screenSetColor(LIGHTBLUE, BLACK);
+            printf("%c", tab->matriz[y][x]);
         }
 
         screenSetColor(WHITE, BLACK);
         printf("%s", BORDA_VERTICAL);
     }
 
-    // --- Borda inferior ---
+    // Borda inferior
     screenGotoxy(MINX, MINY + L + 1);
     printf("%s", BORDA_CANTOS);
-    for (int i = 0; i < C; i++) printf("%s%s", BORDA_HORIZONTAL, BORDA_HORIZONTAL);
+    for (int i = 0; i < C; i++) printf("%s", BORDA_HORIZONTAL);
     printf("%s", BORDA_CANTOS);
 
     screenUpdate();
