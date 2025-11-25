@@ -1,3 +1,4 @@
+// tabuleiro.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,10 +6,11 @@
 #include "tabuleiro.h"
 #include "screen.h"
 
-// Borda 100% ASCII
-#define BORDA_CANTOS       "+"
-#define BORDA_HORIZONTAL   "-"
-#define BORDA_VERTICAL     "|"
+// variáveis globais do jogador
+int jogadorX = 4;
+int jogadorY = 4;
+int next_moveX = 0;
+int next_moveY = 0;
 
 // Cria o tabuleiro e preenche com '.'
 Tabuleiro* criar_tabuleiro(int linhas, int colunas) {
@@ -26,6 +28,13 @@ Tabuleiro* criar_tabuleiro(int linhas, int colunas) {
 
     for (int i = 0; i < linhas; i++) {
         tab->matriz[i] = (char*)malloc(colunas * sizeof(char));
+        if (!tab->matriz[i]) {
+            // libera o que já foi alocado
+            for (int k = 0; k < i; k++) free(tab->matriz[k]);
+            free(tab->matriz);
+            free(tab);
+            return NULL;
+        }
         for (int j = 0; j < colunas; j++) tab->matriz[i][j] = '.';
     }
 
@@ -89,19 +98,16 @@ void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY) {
     screenUpdate();
 }
 
-// =====================
-// Funções de movimento globais
-// =====================
-extern int jogadorX, jogadorY;
-extern int next_moveX, next_moveY;
-
 // Aplica movimento do jogador dentro das bordas
 void aplicar_movimento(Tabuleiro *tab) {
     if (!tab) return;
     int nx = jogadorX + next_moveX;
     int ny = jogadorY + next_moveY;
-    if (nx > 0 && nx < tab->colunas-1) jogadorX = nx;
-    if (ny > 0 && ny < tab->linhas-1) jogadorY = ny;
+
+    // Limita dentro das bordas
+    if (nx > 0 && nx < tab->colunas - 1) jogadorX = nx;
+    if (ny > 0 && ny < tab->linhas - 1) jogadorY = ny;
+
     next_moveX = next_moveY = 0;
 }
 
@@ -109,6 +115,7 @@ void aplicar_movimento(Tabuleiro *tab) {
 void mover_tubaroes_perseguicao(Tabuleiro *tab) {
     if (!tab) return;
 
+    // cria cópia temporária
     char **novo = malloc(tab->linhas * sizeof(char*));
     for (int i = 0; i < tab->linhas; i++) {
         novo[i] = malloc(tab->colunas * sizeof(char));
@@ -122,21 +129,26 @@ void mover_tubaroes_perseguicao(Tabuleiro *tab) {
                 int dy = jogadorY - y;
                 int best_dx = 0, best_dy = 0;
 
-                if (abs(dx) > abs(dy)) best_dx = (dx>0?1:-1);
-                else if (dy != 0) best_dy = (dy>0?1:-1);
+                if (abs(dx) > abs(dy)) best_dx = (dx > 0 ? 1 : -1);
+                else if (dy != 0) best_dy = (dy > 0 ? 1 : -1);
 
                 int nx = x + best_dx;
                 int ny = y + best_dy;
 
-                if (nx > 0 && nx < tab->colunas-1 && ny > 0 && ny < tab->linhas-1) {
-                    if (novo[ny][nx] == '.' && !(nx==jogadorX && ny==jogadorY)) {
+                // move tubarão se não estiver ocupando outro tubarão
+                if (nx > 0 && nx < tab->colunas - 1 && ny > 0 && ny < tab->linhas - 1) {
+                    if (novo[ny][nx] == '.' && !(nx == jogadorX && ny == jogadorY)) {
                         novo[ny][nx] = 'S';
                         novo[y][x] = '.';
-                    } else if (nx==jogadorX && ny==jogadorY) {
+                    } else if (nx == jogadorX && ny == jogadorY) {
                         novo[ny][nx] = 'S';
                         novo[y][x] = '.';
-                    } else novo[y][x] = 'S';
-                } else novo[y][x] = 'S';
+                    } else {
+                        novo[y][x] = 'S';
+                    }
+                } else {
+                    novo[y][x] = 'S';
+                }
             }
         }
     }
