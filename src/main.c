@@ -1,13 +1,11 @@
 /**
- * main.c — finalizado com perguntas, pontuação e tubarões perseguição
+ * main.c — versão funcional
  *
- * Mantive a estrutura original e apenas corrigi a questão das variáveis globais
- * e mantive a movimentação pelo teclado.
+ * Usa funções de tabuleiro.c e logica.c sem duplicar nada.
  */
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <time.h>
 
 #include "screen.h"
@@ -24,69 +22,7 @@
 static int pontos = 0;
 static int vidas = VIDAS_INICIAIS;
 
-// movimento temporário
-// usamos as variáveis globais declaradas em tabuleiro.h
-// int jogadorX;  // já vem de tabuleiro.c
-// int jogadorY;
-// int next_moveX;
-// int next_moveY;
-
-// função de movimentação (1 passo, respeita bordas)
-void aplicar_movimento(Tabuleiro *tab) {
-    if (!tab) return;
-    int nx = jogadorX + next_moveX;
-    int ny = jogadorY + next_moveY;
-    if (nx > 0 && nx < tab->colunas-1) jogadorX = nx;
-    if (ny > 0 && ny < tab->linhas-1) jogadorY = ny;
-    next_moveX = next_moveY = 0;
-}
-
-// tubarões perseguem: um passo em direção ao jogador (checa colisões simples)
-void mover_tubaroes_perseguicao(Tabuleiro *tab) {
-    if (!tab) return;
-
-    char **novo = malloc(tab->linhas * sizeof(char*));
-    for (int i = 0; i < tab->linhas; i++) {
-        novo[i] = malloc(tab->colunas * sizeof(char));
-        memcpy(novo[i], tab->matriz[i], tab->colunas * sizeof(char));
-    }
-
-    for (int y = 0; y < tab->linhas; y++) {
-        for (int x = 0; x < tab->colunas; x++) {
-            if (tab->matriz[y][x] == 'S') {
-                int best_dx = 0, best_dy = 0;
-                int dx = jogadorX - x;
-                int dy = jogadorY - y;
-                if (abs(dx) > abs(dy)) best_dx = (dx>0?1:-1);
-                else if (dy != 0) best_dy = (dy>0?1:-1);
-
-                int nx = x + best_dx;
-                int ny = y + best_dy;
-
-                if (nx > 0 && nx < tab->colunas-1 && ny > 0 && ny < tab->linhas-1) {
-                    if (novo[ny][nx] == '.' && !(nx==jogadorX && ny==jogadorY)) {
-                        novo[ny][nx] = 'S';
-                        novo[y][x] = '.';
-                    } else if (nx==jogadorX && ny==jogadorY) {
-                        novo[ny][nx] = 'S';
-                        novo[y][x] = '.';
-                    } else {
-                        novo[y][x] = 'S';
-                    }
-                } else {
-                    novo[y][x] = 'S';
-                }
-            }
-        }
-    }
-
-    for (int i = 0; i < tab->linhas; i++) {
-        memcpy(tab->matriz[i], novo[i], tab->colunas * sizeof(char));
-        free(novo[i]);
-    }
-    free(novo);
-}
-
+// Desenha HUD na tela
 static void desenhar_hud(Tabuleiro *tab) {
     int hudY = MINY + tab->linhas + 2;
     screenSetColor(YELLOW, DARKGRAY);
@@ -149,11 +85,12 @@ int main() {
         printf("\nPergunta 1 da rodada:\n");
         int ok1 = perguntar_rodada(&banco, PONTOS_NORMAL);
         if (ok1) pontos += PONTOS_NORMAL;
+
         printf("\nPergunta 2 da rodada:\n");
         int ok2 = perguntar_rodada(&banco, PONTOS_NORMAL);
         if (ok2) pontos += PONTOS_NORMAL;
 
-        // movimentação jogador com keyboard.h
+        // movimentação jogador
         printf("\nAgora mova o jogador (WASD). Pressione tecla: ");
         if (keyhit()) {
             char cc = readch();
@@ -165,11 +102,14 @@ int main() {
             else { next_moveX = next_moveY = 0; }
         } else { next_moveX = next_moveY = 0; }
 
+        // aplica movimento do jogador
         aplicar_movimento(tab);
+
+        // tubarões perseguem
         mover_tubaroes_perseguicao(tab);
 
         // colisão com tubarão
-        if (tab->matriz[jogadorY][jogadorX] == 'S') {
+        if (checar_colisao(tab)) {
             printf("\nUm tubarão te capturou! Responda a pergunta difícil para tentar escapar.\n");
             int ok = perguntar_tubarao(&banco, PONTOS_DIFICIL);
             if (ok) {
@@ -179,11 +119,10 @@ int main() {
             } else {
                 vidas--;
                 printf("Você errou. Vidas restantes: %d\n", vidas);
+                tab->matriz[jogadorY][jogadorX] = '.';
                 if (vidas <= 0) {
                     printf("\n🦈 GAME OVER — Você foi pego pelo tubarão e não teve mais vidas.\n");
                     break;
-                } else {
-                    tab->matriz[jogadorY][jogadorX] = '.';
                 }
             }
         }
