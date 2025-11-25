@@ -1,4 +1,3 @@
-// tabuleiro.h
 #ifndef __TABULEIRO_H__
 #define __TABULEIRO_H__
 

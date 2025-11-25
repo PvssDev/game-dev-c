@@ -1,4 +1,3 @@
-// tabuleiro.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +5,7 @@
 #include "tabuleiro.h"
 #include "screen.h"
 
-// variáveis globais do jogador
+// variáveis globais
 int jogadorX = 4;
 int jogadorY = 4;
 int next_moveX = 0;
@@ -21,20 +20,10 @@ Tabuleiro* criar_tabuleiro(int linhas, int colunas) {
     tab->colunas = colunas;
 
     tab->matriz = (char**)malloc(linhas * sizeof(char*));
-    if (!tab->matriz) {
-        free(tab);
-        return NULL;
-    }
+    if (!tab->matriz) { free(tab); return NULL; }
 
     for (int i = 0; i < linhas; i++) {
         tab->matriz[i] = (char*)malloc(colunas * sizeof(char));
-        if (!tab->matriz[i]) {
-            // libera o que já foi alocado
-            for (int k = 0; k < i; k++) free(tab->matriz[k]);
-            free(tab->matriz);
-            free(tab);
-            return NULL;
-        }
         for (int j = 0; j < colunas; j++) tab->matriz[i][j] = '.';
     }
 
@@ -66,12 +55,8 @@ void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY) {
 
     // Corpo
     for (int y = 0; y < L; y++) {
-        int screenY = MINY + 1 + y;
-
-        screenGotoxy(MINX, screenY);
-        screenSetColor(WHITE, BLACK);
+        screenGotoxy(MINX, MINY + 1 + y);
         printf("%s", BORDA_VERTICAL);
-
         for (int x = 0; x < C; x++) {
             if (x == jogadorX && y == jogadorY) {
                 screenSetColor(RED, BLACK);
@@ -84,7 +69,6 @@ void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY) {
                 printf("%c", tab->matriz[y][x]);
             }
         }
-
         screenSetColor(WHITE, BLACK);
         printf("%s", BORDA_VERTICAL);
     }
@@ -98,16 +82,13 @@ void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY) {
     screenUpdate();
 }
 
-// Aplica movimento do jogador dentro das bordas
+// Aplica movimento do jogador
 void aplicar_movimento(Tabuleiro *tab) {
     if (!tab) return;
     int nx = jogadorX + next_moveX;
     int ny = jogadorY + next_moveY;
-
-    // Limita dentro das bordas
     if (nx > 0 && nx < tab->colunas - 1) jogadorX = nx;
     if (ny > 0 && ny < tab->linhas - 1) jogadorY = ny;
-
     next_moveX = next_moveY = 0;
 }
 
@@ -115,11 +96,10 @@ void aplicar_movimento(Tabuleiro *tab) {
 void mover_tubaroes_perseguicao(Tabuleiro *tab) {
     if (!tab) return;
 
-    // cria cópia temporária
     char **novo = malloc(tab->linhas * sizeof(char*));
     for (int i = 0; i < tab->linhas; i++) {
         novo[i] = malloc(tab->colunas * sizeof(char));
-        memcpy(novo[i], tab->matriz[i], tab->colunas * sizeof(char));
+        memcpy(novo[i], tab->matriz[i], tab->colunas);
     }
 
     for (int y = 0; y < tab->linhas; y++) {
@@ -128,39 +108,33 @@ void mover_tubaroes_perseguicao(Tabuleiro *tab) {
                 int dx = jogadorX - x;
                 int dy = jogadorY - y;
                 int best_dx = 0, best_dy = 0;
-
-                if (abs(dx) > abs(dy)) best_dx = (dx > 0 ? 1 : -1);
-                else if (dy != 0) best_dy = (dy > 0 ? 1 : -1);
+                if (abs(dx) > abs(dy)) best_dx = dx>0?1:-1;
+                else if (dy != 0) best_dy = dy>0?1:-1;
 
                 int nx = x + best_dx;
                 int ny = y + best_dy;
 
-                // move tubarão se não estiver ocupando outro tubarão
                 if (nx > 0 && nx < tab->colunas - 1 && ny > 0 && ny < tab->linhas - 1) {
-                    if (novo[ny][nx] == '.' && !(nx == jogadorX && ny == jogadorY)) {
+                    if (novo[ny][nx] == '.' && !(nx==jogadorX && ny==jogadorY)) {
                         novo[ny][nx] = 'S';
                         novo[y][x] = '.';
-                    } else if (nx == jogadorX && ny == jogadorY) {
+                    } else if (nx==jogadorX && ny==jogadorY) {
                         novo[ny][nx] = 'S';
                         novo[y][x] = '.';
-                    } else {
-                        novo[y][x] = 'S';
-                    }
-                } else {
-                    novo[y][x] = 'S';
-                }
+                    } else novo[y][x] = 'S';
+                } else novo[y][x] = 'S';
             }
         }
     }
 
     for (int i = 0; i < tab->linhas; i++) {
-        memcpy(tab->matriz[i], novo[i], tab->colunas * sizeof(char));
+        memcpy(tab->matriz[i], novo[i], tab->colunas);
         free(novo[i]);
     }
     free(novo);
 }
 
-// Checa colisão do jogador com tubarão
+// Checa colisão
 int checar_colisao(Tabuleiro *tab) {
     if (!tab) return 0;
     return tab->matriz[jogadorY][jogadorX] == 'S';

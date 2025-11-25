@@ -9,7 +9,7 @@ typedef struct {
     char pergunta[MAX_TEXTO];
     char alternativas[MAX_ALTERNATIVAS][MAX_TEXTO];
     int n_alternativas;
-    int correta; // index starting at 0
+    int correta;
 } Pergunta;
 
 typedef struct {
@@ -19,16 +19,9 @@ typedef struct {
     int qtd_tubarao;
 } BancoPerguntas;
 
-// carrega arquivo JSON simples
 int carregar_perguntas(const char *path, BancoPerguntas *b);
-
-// faz uma pergunta do tipo "rodada", índice aleatório; retorna 1 se acertou, 0 se errou
 int perguntar_rodada(BancoPerguntas *b, int pontos_por_acerto);
-
-// faz uma pergunta difícil (tubarão), índice aleatório; retorna 1 se acertou, 0 se errou
 int perguntar_tubarao(BancoPerguntas *b, int pontos_por_acerto);
-
-// função utilitária para escolher índice aleatório
 int rand_between(int a, int b);
 
 #endif
