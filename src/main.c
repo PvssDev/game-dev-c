@@ -1,7 +1,8 @@
 /**
  * main.c — finalizado com perguntas, pontuação e tubarões perseguição
  *
- * Mantive a estrutura original e apenas incrementei a movimentação para teclado sem scanf.
+ * Mantive a estrutura original e apenas corrigi a questão das variáveis globais
+ * e mantive a movimentação pelo teclado.
  */
 
 #include <stdio.h>
@@ -19,17 +20,16 @@
 #define PONTOS_DIFICIL 15
 #define VIDAS_INICIAIS 2
 
-// Jogador inicia numa posição segura dentro das bordas
-static int jogadorX = 4;
-static int jogadorY = 4;
-
 // HUD
 static int pontos = 0;
 static int vidas = VIDAS_INICIAIS;
 
 // movimento temporário
-static int next_moveX = 0;
-static int next_moveY = 0;
+// usamos as variáveis globais declaradas em tabuleiro.h
+// int jogadorX;  // já vem de tabuleiro.c
+// int jogadorY;
+// int next_moveX;
+// int next_moveY;
 
 // função de movimentação (1 passo, respeita bordas)
 void aplicar_movimento(Tabuleiro *tab) {
@@ -45,7 +45,6 @@ void aplicar_movimento(Tabuleiro *tab) {
 void mover_tubaroes_perseguicao(Tabuleiro *tab) {
     if (!tab) return;
 
-    // cria uma cópia temporária para evitar conflitos ao mover no mesmo loop
     char **novo = malloc(tab->linhas * sizeof(char*));
     for (int i = 0; i < tab->linhas; i++) {
         novo[i] = malloc(tab->colunas * sizeof(char));
@@ -60,9 +59,10 @@ void mover_tubaroes_perseguicao(Tabuleiro *tab) {
                 int dy = jogadorY - y;
                 if (abs(dx) > abs(dy)) best_dx = (dx>0?1:-1);
                 else if (dy != 0) best_dy = (dy>0?1:-1);
-                else { best_dx = 0; best_dy = 0; }
+
                 int nx = x + best_dx;
                 int ny = y + best_dy;
+
                 if (nx > 0 && nx < tab->colunas-1 && ny > 0 && ny < tab->linhas-1) {
                     if (novo[ny][nx] == '.' && !(nx==jogadorX && ny==jogadorY)) {
                         novo[ny][nx] = 'S';
@@ -80,7 +80,6 @@ void mover_tubaroes_perseguicao(Tabuleiro *tab) {
         }
     }
 
-    // copia de volta
     for (int i = 0; i < tab->linhas; i++) {
         memcpy(tab->matriz[i], novo[i], tab->colunas * sizeof(char));
         free(novo[i]);
@@ -102,6 +101,12 @@ int main() {
     screenInit(1);
     keyboardInit();
     timerInit(50);
+
+    // posição inicial segura do jogador
+    jogadorX = 4;
+    jogadorY = 4;
+    next_moveX = 0;
+    next_moveY = 0;
 
     // carrega perguntas
     BancoPerguntas banco;
