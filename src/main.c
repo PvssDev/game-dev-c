@@ -1,6 +1,6 @@
 /**
  * src/main.c
- * Versão Final - SharkLog Game
+ * Versão Final - SharkLog Game (Sem Ondas)
  */
 
 #include <stdio.h>
@@ -15,10 +15,14 @@
 #include "../include/jogador.h"
 #include "../include/jogo.h"
 
+// Garante visibilidade
+void jogo_inicializar_tubaroes(Tabuleiro *tab, int pontuacao);
+void jogo_resetar_tubaroes(Tabuleiro *tab, int pontuacao);
+
 int main() {
     screenInit(1);
     keyboardInit();
-    timerInit(1000); // 1 Segundo para movimento dos tubarões
+    timerInit(1000); 
     srand((unsigned) time(NULL));
 
     Tabuleiro *tab = criar_tabuleiro(ALTURA_JOGO, LARGURA_JOGO);
@@ -27,8 +31,8 @@ int main() {
     Jogador *surfista = criar_jogador(tab);
     if (!surfista) return 1;
 
-    // Inicializa com a pontuação 0 (6 tubarões)
-    jogo_inicializar_tubaroes(tab, surfista->pontuacao); 
+    // Inicializa o jogo
+    jogo_resetar_tubaroes(tab, surfista->pontuacao); 
     int game_running = 1;
 
     while (game_running && surfista->vidas > 0) {
@@ -36,14 +40,12 @@ int main() {
         desenhar_HUD(surfista);
         desenhar_tabuleiro(tab, surfista->x, surfista->y);
         
+        // Fase de Perguntas
         if (!jogo_fase_perguntas(tab, surfista)) {
             game_running = 0; 
             break;
         }
 
-        // --- CORREÇÃO PRINCIPAL ---
-        // Agora atualizamos os tubarões IMEDIATAMENTE após ganhar pontos.
-        // Se você tem 50 pts, isso vai gerar 11 tubarões agora mesmo.
         jogo_inicializar_tubaroes(tab, surfista->pontuacao);
 
         screenClear(); 
@@ -56,6 +58,7 @@ int main() {
         
         int moveu = 0;
         
+        // Loop de Ação
         while (!moveu && game_running) {
             
             // 1. Input do Jogador
@@ -70,13 +73,15 @@ int main() {
                 desenhar_tabuleiro(tab, surfista->x, surfista->y);
             }
 
-            // 2. Movimento dos Tubarões (Tempo Real)
+            // 2. Movimento dos Inimigos (Tubarões)
             if (timerTimeOver()) {
                 jogo_mover_tubaroes(tab, surfista);
                 
+                // Se um tubarão andou em cima de você
                 if (verificar_colisao(surfista, tab)) {
                     moveu = 1; 
                 }
+                
                 desenhar_tabuleiro(tab, surfista->x, surfista->y);
             }
         }
@@ -85,19 +90,25 @@ int main() {
         screenGotoxy(MINX, Y_MSG);
         printf("                                    ");
 
-        // FASE DE COLISÃO
+        // --- COLISÃO COM TUBARÃO (S) ---
         if (verificar_colisao(surfista, tab)) {
-            surfista->x = 1; 
-            surfista->y = 1; 
-            desenhar_tabuleiro(tab, surfista->x, surfista->y);
-
-            if (jogo_pergunta_tubarao(tab, surfista)) {
-                // Acertou
-            } else {
-                // Errou
+            
+            // Remove o tubarão específico que mordeu
+            if (tab->matriz[surfista->y][surfista->x] == 'S') {
+                tab->matriz[surfista->y][surfista->x] = '.';
             }
-            // Recalcula também ao morrer/colidir
-            jogo_inicializar_tubaroes(tab, surfista->pontuacao); 
+            
+            surfista->vidas--;
+            
+            screenSetColor(RED, BLACK);
+            screenGotoxy(MINX, Y_MSG);
+            printf("AI! VOCE FOI MORDIDO! -1 VIDA");
+            
+            screenUpdate();
+            usleep(1000 * 1000); 
+            
+            screenGotoxy(MINX, Y_MSG);
+            printf("                                 ");
         }
     }
 
@@ -105,7 +116,7 @@ int main() {
     screenGotoxy(MAXX/2 - 10, MAXY/2);
     if (surfista->vidas <= 0) {
         screenSetColor(RED, BLACK);
-        printf("GAME OVER! A lógica falhou.");
+        printf("GAME OVER!");
     } else {
         screenSetColor(GREEN, BLACK);
         printf("JOGO ENCERRADO.");

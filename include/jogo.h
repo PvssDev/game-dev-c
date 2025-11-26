@@ -9,7 +9,6 @@
 #define PONTOS_DIFICIL 20
 
 // Funções Principais
-// MUDANÇA: Agora aceitam 'pontuacao' para calcular dificuldade
 void jogo_inicializar_tubaroes(Tabuleiro *tab, int pontuacao);
 void jogo_resetar_tubaroes(Tabuleiro *tab, int pontuacao);
 
@@ -20,6 +19,7 @@ int fazer_pergunta_gui(Tabuleiro *tab, Jogador *j, const char* p, const char* r1
 int jogo_pergunta_tubarao(Tabuleiro *tab, Jogador *j);
 
 void jogo_mover_tubaroes(Tabuleiro *tab, Jogador *j);
+
 void desenhar_HUD(Jogador *j);
 
 #endif
