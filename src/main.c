@@ -1,6 +1,6 @@
 /**
  * src/main.c
- * Versão Final - SharkLog Game (Sem Ondas)
+ * Versão Final - SharkLog Game
  */
 
 #include <stdio.h>

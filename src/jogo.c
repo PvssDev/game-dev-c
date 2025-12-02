@@ -18,7 +18,6 @@
 #include "../include/jogador.h"
 #include "../include/jogo.h"
 
-// Fallback
 #ifndef ALTURA_JOGO
 #define ALTURA_JOGO 15
 #endif
@@ -192,7 +191,7 @@ void jogo_inicializar_tubaroes(Tabuleiro *tab, int pontuacao) {
 void jogo_resetar_tubaroes(Tabuleiro *tab, int pontuacao) {
     for(int i=0; i<tab->linhas; i++)
         for(int j=0; j<tab->colunas; j++) {
-            if(tab->matriz[i][j] == 'S') { // Removida verificação de ondas
+            if(tab->matriz[i][j] == 'S') {
                 tab->matriz[i][j] = '.';
             }
         }

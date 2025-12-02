@@ -1,7 +1,7 @@
 #ifndef TABULEIRO_H
 #define TABULEIRO_H
 
-// Dimensões do Jogo (Ajustado para caber na tela com margem)
+// Dimensões do Jogo
 #define LARGURA_JOGO 35 
 #define ALTURA_JOGO  15
 
