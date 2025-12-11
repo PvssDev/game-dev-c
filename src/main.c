@@ -1,10 +1,7 @@
 /**
  * src/main.c
  * Versão Final - SharkLog Game
- * Alteração: 
- * - Removida mensagem "SUA VEZ"
- * - Removido movimento automático dos tubarões no loop principal
- * (Agora eles só devem se mover na punição, dentro de jogo.c)
+ * Lógica Principal de Loop e Colisão
  */
 
 #include <stdio.h>
@@ -56,17 +53,13 @@ int main() {
         desenhar_HUD(surfista);
         desenhar_tabuleiro(tab, surfista->x, surfista->y);
         
-        // Mantemos a variavel Y_MSG pois ela é usada nas mensagens de dano abaixo
         int Y_MSG = MINY + ALTURA_JOGO + 4;
         
-        int moveu = 0;
-                
         if (!game_running) break;
         screenGotoxy(MINX, Y_MSG);
         printf("                                    ");
 
         // --- COLISÃO COM TUBARÃO (S) ---
-        // Verifica se o jogador andou em cima de um tubarão
         if (verificar_colisao(surfista, tab)) {
             
             // Remove o tubarão específico que mordeu
@@ -80,11 +73,24 @@ int main() {
             screenGotoxy(MINX, Y_MSG);
             printf("AI! VOCE FOI MORDIDO! -1 VIDA");
             
+            // Garante que a mensagem apareça antes de pausar
             screenUpdate();
-            usleep(1000 * 1000); 
+            fflush(stdout); 
             
+            // Pausa dramática
+            usleep(2000 * 1000); 
+            
+            // --- CORREÇÃO DO BUFFER DE TECLADO ---
+            // Enquanto houver teclas "pendentes" que foram apertadas durante o sono,
+            // nós as lemos e jogamos fora para não afetar o movimento seguinte.
+            while(keyhit()) {
+                readch();
+            }
+            
+            // Limpa a mensagem antes de continuar
             screenGotoxy(MINX, Y_MSG);
             printf("                                 ");
+            screenUpdate();
         }
     }
 
@@ -102,6 +108,11 @@ int main() {
 
     screenUpdate();
     usleep(3000 * 1000); 
+    
+    // Limpeza final do buffer para não sair escrevendo no terminal do usuário
+    while(keyhit()) {
+        readch();
+    }
 
     destruir_jogador(surfista);
     destruir_tabuleiro(tab);
