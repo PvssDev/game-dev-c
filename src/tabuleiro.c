@@ -106,7 +106,7 @@ void desenhar_tabuleiro(Tabuleiro *tab, int jogadorX, int jogadorY) {
             // CAMADA 3: LULA (L) - NOVO!
             // Aqui estava o problema: sem este if, o código desenhava água no lugar do L
             if (tab->matriz[y][x] == 'L') {
-                screenSetColor(MAGENTA, BLACK); // Cor diferente para destacar (se o terminal suportar) ou apenas branco
+                screenSetColor(MAGENTA, BLACK);
                 printf("🦑"); 
                 continue;
             }

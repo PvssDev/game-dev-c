@@ -1,8 +1,6 @@
 /**
  * src/jogo.c
- * Lógica do Jogo (Perguntas, Movimento, Punição, Inimigo Lula)
- * Versão: Lula desaparece e reseta ciclo após colisão
- * Melhoria de IA: Desvia de Tubarões
+ * Versão: menu atualizado
  */
 
 #include <stdio.h>
@@ -60,6 +58,13 @@ static const char* PERGUNTAS_NORMAIS[][4] = {
     {"Qual destas proposições é tautologia?", "P v ~P", "P ^ ~P", "0"},
     {"Se P=F, Q=V, valor de (P -> Q) ^ (Q -> P)?", "Verdadeiro", "Falso", "1"},
     {"Expressão ~(P -> Q) é equivalente a:", "P ^ ~Q", "~P ^ Q", "0"},
+    {"Qual expressão equivalente a (P <-> Q)?", "(P^Q)v(~P^~Q)", "(P^~Q)", "0"},
+    {"Se P=V, Q=F, valor de (P ^ Q) v (~Q)?", "Verdadeiro", "Falso", "0"},
+    {"Qual expressão equivalente a ~(P v Q)?", "~P ^ ~Q", "~P v ~Q", "0"},
+    {"Tabela P -> Q é falsa apenas quando:", "P=V e Q=F", "P=F e Q=V", "0"},
+    {"Qual destas proposições é tautologia?", "P v ~P", "P ^ ~P", "0"},
+    {"Se P=F, Q=V, valor de (P -> Q) ^ (Q -> P)?", "Verdadeiro", "Falso", "1"},
+    {"Expressão ~(P -> Q) é equivalente a:", "P ^ ~Q", "~P ^ Q", "0"},
     {"Qual expressão equivalente a (P <-> Q)?", "(P^Q)v(~P^~Q)", "(P^~Q)", "0"}
 };
 
@@ -104,22 +109,18 @@ void remover_lula(Tabuleiro *tab) {
     lula_ativa = 0;
 }
 
-// NOVA FUNÇÃO: Reseta o ciclo da Lula após colisão
+// Reseta o ciclo da Lula após colisão
 void lula_colisao_reset(Tabuleiro *tab, Jogador *j) {
     if (!lula_ativa) return;
     
-    // 1. Remove a lula do mapa
     remover_lula(tab);
 
-    // 2. Reseta o contador de acertos
     lula_contagem_acertos = 0;
 
-    // 3. Define a pontuação base para a ATUAL
     // Isso faz com que a lula só apareça novamente quando o jogador fizer +50 pontos a partir de AGORA
     lula_ultimo_spawn_pontos = j->pontuacao;
 }
 
-// (Mantida para casos de erro, mas substituída logicamente pela função acima na colisão)
 void teleportar_lula(Tabuleiro *tab, Jogador *j) {
     if (!lula_ativa) return;
     remover_lula(tab); // Temporário para reposicionar
@@ -154,7 +155,7 @@ void mover_lula(Tabuleiro *tab, Jogador *j) {
 
     if (lx == -1) return; 
 
-    // --- IA DE DESVIO DE OBSTÁCULOS (TUBARÕES) ---
+    // --- DESVIO DE OBSTÁCULOS ---
     
     int dx = j->x - lx; // Diferença X
     int dy = j->y - ly; // Diferença Y
@@ -242,6 +243,7 @@ void gerenciar_lula_ciclo(Tabuleiro *tab, Jogador *j) {
             screenSetColor(MAGENTA, BLACK);
             screenGotoxy(MINX, MINY + ALTURA_JOGO + 4);
             printf("CUIDADO! UMA LULA GIGANTE APARECEU!");
+	    fflush(stdout);
             screenUpdate();
             usleep(1500000);
         }
@@ -253,7 +255,8 @@ void gerenciar_lula_ciclo(Tabuleiro *tab, Jogador *j) {
             screenSetColor(CYAN, BLACK);
             screenGotoxy(MINX, MINY + ALTURA_JOGO + 4);
             printf("A LULA FUGIU! VOCE A ASSUSTOU!");
-            screenUpdate();
+            fflush(stdout);
+	    screenUpdate();
             usleep(1500000);
         }
     }
@@ -324,10 +327,7 @@ void animar_punicao(Tabuleiro *tab, Jogador *j) {
         if (timerTimeOver()) {
             jogo_mover_tubaroes(tab, j);
             
-            // Correção Visual: Evita que a Lula "pisque" em cima do jogador durante a punição
             if(lula_ativa) {
-                // Se a lula estiver na mesma posição do jogador (colisão),
-                // removemos visualmente para evitar o conflito de desenho
                 if(verificar_colisao_lula(j, tab)) {
                     remover_lula(tab); 
                 } else {
@@ -340,9 +340,11 @@ void animar_punicao(Tabuleiro *tab, Jogador *j) {
             
             screenSetColor(RED, BLACK);
             screenGotoxy(MINX, START_Y);
-            printf("                                                      "); 
-            screenGotoxy(MINX, START_Y);
-            printf("PUNICAO! CONGELADO! OS INIMIGOS ESTAO CHEGANDO!");
+
+            printf("                                                                                "); 
+            
+            screenGotoxy(MINX, START_Y); // Offset para centralizar
+            printf("VOCE CAIU DA PRANCHA! OS INIMIGOS ESTAO CHEGANDO!");
             screenUpdate();
         }
         usleep(10000); 
@@ -351,20 +353,33 @@ void animar_punicao(Tabuleiro *tab, Jogador *j) {
 
 void desenhar_painel_pergunta(const char* p, const char* r1, const char* r2) {
     int START_Y = MINY + ALTURA_JOGO + 3; 
+    
     screenSetColor(WHITE, BLACK);
     for(int i=0; i<6; i++) {
         screenGotoxy(MINX, START_Y + i);
-        printf("                                                      "); 
+
+        printf("                                                                                "); 
     }
+    
     screenSetColor(YELLOW, BLACK);
-    screenGotoxy(MINX, START_Y);     printf("=== PERGUNTA DE LÓGICA ===");
+    // Título
+    screenGotoxy(MINX , START_Y);     
+    printf("=== PERGUNTA DE LÓGICA ===");
+    
     screenSetColor(WHITE, BLACK);
-    screenGotoxy(MINX, START_Y + 1); printf("P: %s", p); 
+    // Pergunta
+    screenGotoxy(MINX , START_Y + 1); 
+    printf("P: %s", p); 
+    
     screenSetColor(CYAN, BLACK);
-    screenGotoxy(MINX + 2, START_Y + 2); printf("[1] %s", r1);
-    screenGotoxy(MINX + 2, START_Y + 3); printf("[2] %s", r2);
+    // Respostas
+    screenGotoxy(MINX , START_Y + 2); printf("[1] %s", r1);
+    screenGotoxy(MINX , START_Y + 3); printf("[2] %s", r2);
+    
     screenSetColor(WHITE, BLACK);
-    screenGotoxy(MINX, START_Y + 4); printf("Escolha [1] ou [2] (ou mova-se WASD)");
+    // Instrução
+    screenGotoxy(MINX , START_Y + 4); 
+    printf("Escolha [1] ou [2] (ou mova-se WASD)");
 }
 
 int fazer_pergunta_gui(Tabuleiro *tab, Jogador *j, const char* p, const char* r1, const char* r2, int indice_correta) {
@@ -480,10 +495,12 @@ int jogo_fase_perguntas(Tabuleiro *tab, Jogador *j) {
         int res = fazer_pergunta_gui(tab, j, PERGUNTAS_NORMAIS[idx][0], PERGUNTAS_NORMAIS[idx][1], PERGUNTAS_NORMAIS[idx][2], correta);
         
         int START_Y = MINY + ALTURA_JOGO + 3;
+        
+        // --- Limpa área de perguntas ---
         screenSetColor(WHITE, BLACK);
         for(int k=0; k<6; k++) {
             screenGotoxy(MINX, START_Y + k);
-            printf("                                                      ");
+            printf("                                                                                ");
         }
         screenGotoxy(MINX, START_Y);
 
@@ -492,12 +509,12 @@ int jogo_fase_perguntas(Tabuleiro *tab, Jogador *j) {
         
         if (res == -3) {
              screenSetColor(MAGENTA, BLACK);
+             screenGotoxy(MINX , START_Y);
              printf("A LULA TE PEGOU! TENTACULOS GELADOS!");
              fflush(stdout);
              screenUpdate();
-	     usleep(1000 * 2000);
+             usleep(1000 * 2000);
              
-             // CORREÇÃO: Reseta ANTES de animar para ela sumir da tela imediatamente
              lula_colisao_reset(tab, j); 
              
              animar_punicao(tab, j);
@@ -510,29 +527,32 @@ int jogo_fase_perguntas(Tabuleiro *tab, Jogador *j) {
             if (lula_ativa) {
                 lula_contagem_acertos++;
                 screenSetColor(CYAN, BLACK);
+                screenGotoxy(MINX , START_Y);
                 printf("ACERTOU! (Lula: %d/5 para despistar)", lula_contagem_acertos);
-		
-            	fflush(stdout);
-            	screenUpdate();
-            	usleep(1000 * 1500);
+        
+                fflush(stdout);
+                screenUpdate();
+                usleep(1000 * 1500);
             } else {
                 screenSetColor(GREEN, BLACK);
+                screenGotoxy(MINX , START_Y);
                 printf("ACERTOU! +%d pts. ", PONTOS_NORMAL);
-		
-		fflush(stdout);
-           	screenUpdate();
-            	usleep(1000 * 800);
+        
+                fflush(stdout);
+                screenUpdate();
+                usleep(1000 * 800);
             }
 
-    	    while(keyhit()) {
-     	      readch();
-   	    }
+            while(keyhit()) {
+               readch();
+            }
             
             gerenciar_lula_ciclo(tab, j);
 
         } else {
             screenSetColor(RED, BLACK);
-            printf("ERROU! PUNIÇÃO: VOCE ESORREGOU...");
+            screenGotoxy(MINX , START_Y);
+            printf("ERROU! PUNIÇÃO: VOCE ESCORREGOU...");
             fflush(stdout);
             screenUpdate();
             animar_punicao(tab, j); 
@@ -544,7 +564,7 @@ int jogo_fase_perguntas(Tabuleiro *tab, Jogador *j) {
 void desenhar_HUD(Jogador *j) {
     int Y_HUD = MINY + ALTURA_JOGO + 2; 
     screenSetColor(WHITE, BLACK);
-    screenGotoxy(MINX, Y_HUD);
+    screenGotoxy(MINX , Y_HUD);
     printf(" 🏄 PONTOS: %d  |  VIDAS: %d  |  [WASD] Mover | [Q] Sair ", j->pontuacao, j->vidas);
     
     if(lula_ativa) {
