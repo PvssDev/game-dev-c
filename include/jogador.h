@@ -9,6 +9,7 @@ typedef struct {
     // --- Adicionados para o SharkLog Game ---
     int vidas;
     int pontuacao;
+    char nome[11]; // Adicionado para o sistema de Ranking
 } Jogador;
 
 Jogador* criar_jogador(Tabuleiro* tab);
